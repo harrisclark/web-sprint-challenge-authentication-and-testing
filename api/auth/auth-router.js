@@ -1,7 +1,24 @@
 const router = require('express').Router();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const Users = require('../models/users-model')
 
-router.post('/register', (req, res) => {
-  res.end('implement register, please!');
+
+router.post('/register', async (req, res, next) => {
+  try {
+    const existingUser = await Users.findBy({ username: req.body.username })
+    if (existingUser.length) {
+      next({ status: 422, message: `Username: ${req.body.username} is taken`})
+      return;
+    }
+
+    const hash = bcrypt.hashSync(req.body.password, 8)
+    const savedUser = await Users.add({ username: req.body.username, password: hash })
+    res.status(201).json(savedUser)
+
+  } catch(err) {
+    next(err)
+  }
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
